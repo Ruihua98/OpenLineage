@@ -14,7 +14,6 @@ import io.openlineage.spark.agent.lifecycle.ExecutionContext;
 import io.openlineage.spark.agent.util.ScalaConversionUtils;
 import java.io.PrintWriter;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -202,15 +201,6 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
     return outputs.get(rdd);
   }
 
-  public static void emitError(Exception e) {
-    OpenLineage ol = new OpenLineage(Versions.OPEN_LINEAGE_PRODUCER_URI);
-    try {
-      contextFactory.openLineageEventEmitter.emit(buildErrorLineageEvent(ol, errorRunFacet(e, ol)));
-    } catch (Exception ex) {
-      log.error("Could not emit open lineage on error", e);
-    }
-  }
-
   @SuppressWarnings(
       "PMD") // javadoc -> Closing a ByteArrayOutputStream has no effect. The methods in this class
   // can be called after the stream has been closed without generating an IOException.
@@ -225,21 +215,6 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
     return runFacetsBuilder.build();
   }
 
-  public static OpenLineage.RunEvent buildErrorLineageEvent(
-      OpenLineage ol, OpenLineage.RunFacets runFacets) {
-    return ol.newRunEventBuilder()
-        .eventTime(ZonedDateTime.now())
-        .run(
-            ol.newRun(
-                contextFactory.openLineageEventEmitter.getParentRunId().orElse(null), runFacets))
-        .job(
-            ol.newJobBuilder()
-                .namespace(contextFactory.openLineageEventEmitter.getJobNamespace())
-                .name(contextFactory.openLineageEventEmitter.getParentJobName())
-                .build())
-        .build();
-  }
-
   private static void clear() {
     sparkSqlExecutionRegistry.clear();
     rddExecutionRegistry.clear();
@@ -248,6 +223,7 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
 
   @Override
   public void onApplicationEnd(SparkListenerApplicationEnd applicationEnd) {
+    emitApplicationEndEvent();
     close();
     super.onApplicationEnd(applicationEnd);
   }
@@ -264,27 +240,46 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
    */
   @Override
   public void onApplicationStart(SparkListenerApplicationStart applicationStart) {
-    initializeContextFactoryIfNotInitialized();
+    initializeContextFactoryIfNotInitialized(applicationStart.appName());
+    emitApplicationStartEvent();
   }
 
   private void initializeContextFactoryIfNotInitialized() {
     if (contextFactory != null || isDisabled) {
       return;
     }
+  }
+
+  private void initializeContextFactoryIfNotInitialized(String appName) {
+
+    if (contextFactory != null || isDisabled) {
+      return;
+    }
     SparkEnv sparkEnv = SparkEnv$.MODULE$.get();
-    if (sparkEnv != null) {
-      try {
-        ArgumentParser args = ArgumentParser.parse(sparkEnv.conf());
-        contextFactory = new ContextFactory(new EventEmitter(args));
-      } catch (URISyntaxException e) {
-        log.error("Unable to parse open lineage endpoint. Lineage events will not be collected", e);
-      }
-    } else {
+    if (sparkEnv == null) {
       log.warn(
           "Open lineage listener instantiated, but no configuration could be found. "
               + "Lineage events will not be collected");
+      return;
+    }
+    initializeContextFactoryIfNotInitialized(sparkEnv.conf(), appName);
+  }
+
+  private void initializeContextFactoryIfNotInitialized(SparkConf sparkConf, String appName) {
+    if (contextFactory != null || isDisabled) {
+      return;
+    }
+    try {
+      ArgumentParser args = ArgumentParser.parse(sparkConf);
+      contextFactory = new ContextFactory(new EventEmitter(args, appName));
+    } catch (URISyntaxException e) {
+      log.error("Unable to parse open lineage endpoint. Lineage events will not be collected", e);
     }
   }
+
+  public void emitApplicationStartEvent() {}
+
+  public void emitApplicationEndEvent() {}
 
   private static boolean checkIfDisabled() {
     String isDisabled = Environment.getEnvironmentVariable("OPENLINEAGE_DISABLED");

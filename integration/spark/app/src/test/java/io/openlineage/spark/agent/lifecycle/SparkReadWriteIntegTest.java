@@ -129,7 +129,7 @@ class SparkReadWriteIntegTest {
     when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getParentRunId())
         .thenReturn(Optional.of(UUID.randomUUID()));
     when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getParentJobName())
-        .thenReturn("ParentJob");
+        .thenReturn(Optional.of("ParentJob"));
     when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getJobNamespace())
         .thenReturn("Namespace");
   }
@@ -425,7 +425,7 @@ class SparkReadWriteIntegTest {
     when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getJobNamespace())
         .thenReturn("theNamespace");
     when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getParentJobName())
-        .thenReturn("theParentJob");
+        .thenReturn(Optional.of("theParentJob"));
     when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getParentRunId())
         .thenReturn(Optional.of(UUID.randomUUID()));
     JobConf conf = new JobConf();

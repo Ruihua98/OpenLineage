@@ -56,7 +56,7 @@ public class SparkSQLExecutionContextTest {
   public void setup() {
     when(olContext.getQueryExecution()).thenReturn(Optional.of(queryExecution));
     when(olContext.getOpenLineage()).thenReturn(openLineage);
-    when(eventEmitter.getAppName()).thenReturn(Optional.of("app-name"));
+    when(eventEmitter.getOverriddenAppName()).thenReturn(Optional.of("app-name"));
     when(queryExecution.executedPlan().nodeName()).thenReturn("some-node-name");
   }
 

@@ -68,7 +68,7 @@ class OpenLineageSparkListenerTest {
 
     olContext =
         OpenLineageContext.builder()
-            .sparkSession(Optional.of(sparkSession))
+            .sparkSession(sparkSession)
             .sparkContext(sparkSession.sparkContext())
             .openLineage(new OpenLineage(Versions.OPEN_LINEAGE_PRODUCER_URI))
             .queryExecution(qe)

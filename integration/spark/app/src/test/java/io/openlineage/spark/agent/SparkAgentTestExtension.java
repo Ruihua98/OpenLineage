@@ -18,7 +18,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.spark.sql.SparkSession;
@@ -122,11 +122,16 @@ public class SparkAgentTestExtension
   }
 
   public static OpenLineageContext newContext(SparkSession sparkSession) {
+    OpenLineage openLineage = new OpenLineage(Versions.OPEN_LINEAGE_PRODUCER_URI);
     return OpenLineageContext.builder()
-        .sparkSession(Optional.of(sparkSession))
+        .sparkSession(sparkSession)
         .sparkContext(sparkSession.sparkContext())
-        .openLineage(new OpenLineage(Versions.OPEN_LINEAGE_PRODUCER_URI))
-        .customEnvironmentVariables(Optional.of(Arrays.asList("TEST_VAR")))
+        .openLineage(openLineage)
+        .customEnvironmentVariables(Arrays.asList("TEST_VAR"))
+        .applicationParentFacet(
+            openLineage.newParentRunFacet(
+                openLineage.newParentRunFacetRun(UUID.randomUUID()),
+                openLineage.newParentRunFacetJob("namespace", "job_name")))
         .build();
   }
 }

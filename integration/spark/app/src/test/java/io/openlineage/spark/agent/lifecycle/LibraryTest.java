@@ -13,7 +13,6 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import io.openlineage.client.OpenLineage;
 import io.openlineage.client.OpenLineage.RunEvent;
@@ -50,59 +49,11 @@ class LibraryTest {
   private final TypeReference<Map<String, Object>> mapTypeReference =
       new TypeReference<Map<String, Object>>() {};
 
-  //  @RepeatedTest(30)
-  //  public void testSparkSql(SparkSession spark) throws IOException, TimeoutException {
-  //    when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getJobNamespace())
-  //        .thenReturn("ns_name");
-  //    when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getParentJobName())
-  //        .thenReturn("job_name");
-  //    when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getParentRunId())
-  //        .thenReturn(Optional.of(UUID.fromString("ea445b5c-22eb-457a-8007-01c7c52b6e54")));
-  //
-  //    URL url = Resources.getResource("test_data/data.txt");
-  //    final Dataset<String> data = spark.read().textFile(url.getPath());
-  //
-  //    final long numAs = data.filter((FilterFunction<String>) s -> s.contains("a")).count();
-  //    final long numBs = data.filter((FilterFunction<String>) s -> s.contains("b")).count();
-  //
-  //    System.out.println("Lines with a: " + numAs + ", lines with b: " + numBs);
-  //    spark.sparkContext().listenerBus().waitUntilEmpty(1000);
-  //    spark.stop();
-  //
-  //    ArgumentCaptor<OpenLineage.RunEvent> lineageEvent =
-  //        ArgumentCaptor.forClass(OpenLineage.RunEvent.class);
-  //    Mockito.verify(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT, times(4))
-  //        .emit(lineageEvent.capture());
-  //    List<OpenLineage.RunEvent> events = lineageEvent.getAllValues();
-  //
-  //    assertEquals(4, events.size());
-  //
-  //    ObjectMapper objectMapper = OpenLineageClient.getObjectMapper();
-  //
-  //    for (int i = 0; i < events.size(); i++) {
-  //      OpenLineage.RunEvent event = events.get(i);
-  //      Map<String, Object> snapshot =
-  //          objectMapper.readValue(
-  //              Paths.get(String.format("integrations/%s/%d.json", "sparksql", i + 1)).toFile(),
-  //              mapTypeReference);
-  //      Map<String, Object> actual =
-  //          objectMapper.readValue(objectMapper.writeValueAsString(event), mapTypeReference);
-  //      assertThat(actual)
-  //          .satisfies(
-  //              new MatchesMapRecursively(
-  //                  snapshot,
-  //                  new HashSet<>(
-  //                      Arrays.asList("runId", "nonInheritableMetadataKeys",
-  // "validConstraints"))));
-  //    }
-  //    verifySerialization(events);
-  //  }
-
   @Test
   void testRdd(@TempDir Path tmpDir, SparkSession spark) throws IOException {
     when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getJobNamespace())
         .thenReturn("ns_name");
-    when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getParentJobName())
+    when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getApplicationJobName())
         .thenReturn("job_name");
     when(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT.getParentRunId())
         .thenReturn(Optional.of(UUID.fromString("8d99e33e-2a1c-4254-9600-18f23435fc3b")));
@@ -125,8 +76,6 @@ class LibraryTest {
         .emit(lineageEvent.capture());
     List<OpenLineage.RunEvent> events = lineageEvent.getAllValues();
     assertEquals(2, events.size());
-
-    ObjectMapper objectMapper = OpenLineageClientUtils.newObjectMapper();
 
     // verify first event
     RunEvent first = events.get(0);
