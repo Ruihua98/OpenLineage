@@ -17,34 +17,50 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.SparkListenerJobStart;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.scheduler.SparkListenerEvent;
 
 public class SparkPropertyFacetBuilder
-    extends CustomFacetBuilder<SparkListenerJobStart, SparkPropertyFacet> {
+    extends CustomFacetBuilder<SparkListenerEvent, SparkPropertyFacet> {
   private static final Set<String> DEFAULT_ALLOWED_PROPERTIES =
       new HashSet<>(Arrays.asList("spark.master", "spark.app.name"));
   private static final String ALLOWED_PROPERTIES_KEY = "spark.openlineage.capturedProperties";
   private final SparkConf conf;
   private final Set<String> allowerProperties;
+  private SparkSession sparkSession;
 
   public SparkPropertyFacetBuilder(OpenLineageContext context) {
     conf = context.getSparkContext().getConf();
+    sparkSession = context.getSparkSession().get();
     allowerProperties =
         conf.contains(ALLOWED_PROPERTIES_KEY)
             ? Arrays.stream(conf.get(ALLOWED_PROPERTIES_KEY).split(",")).collect(Collectors.toSet())
             : DEFAULT_ALLOWED_PROPERTIES;
   }
 
-  // TODO: Change this facet to record spark-session's run time configurations.
+  /*
+  Changes:
+  1. Change listener status from SparkListenerJobStart to SparkListenerEvent
+  2. Add recordings for spark session's run-time configuration.
+   */
+
   @Override
   protected void build(
-      SparkListenerJobStart event, BiConsumer<String, ? super SparkPropertyFacet> consumer) {
+      SparkListenerEvent event, BiConsumer<String, ? super SparkPropertyFacet> consumer) {
     Map<String, Object> m = new HashMap<>();
     Arrays.stream(conf.getAll())
         .filter(t -> allowerProperties.contains(t._1))
         .forEach(t -> m.putIfAbsent(t._1, t._2));
-    event.properties().entrySet().stream()
-        .filter(e -> allowerProperties.contains(e.getKey()))
-        .forEach(e -> m.putIfAbsent(e.getKey().toString(), e.getValue()));
+//    event.properties().entrySet().stream()
+//        .filter(e -> allowerProperties.contains(e.getKey()))
+//        .forEach(e -> m.putIfAbsent(e.getKey().toString(), e.getValue()));
+
+    for(String key: allowerProperties){
+      if(null != sparkSession.conf().get(key)){
+        m.putIfAbsent(key,sparkSession.conf().get(key));
+      }
+    }
+
     consumer.accept("spark_properties", new SparkPropertyFacet(m));
   }
 }
