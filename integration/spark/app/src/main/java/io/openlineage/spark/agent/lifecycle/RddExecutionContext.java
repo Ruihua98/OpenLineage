@@ -13,6 +13,7 @@ import io.openlineage.spark.agent.OpenLineageSparkListener;
 import io.openlineage.spark.agent.Versions;
 import io.openlineage.spark.agent.facets.ErrorFacet;
 import io.openlineage.spark.agent.facets.SparkVersionFacet;
+import io.openlineage.spark.agent.facets.SparkPropertyFacet;
 import io.openlineage.spark.agent.facets.builder.SparkProcessingEngineRunFacetBuilderDelegate;
 import io.openlineage.spark.agent.lifecycle.DatasetParser.DatasetParseResult;
 import io.openlineage.spark.agent.util.PlanUtils;
@@ -264,6 +265,7 @@ class RddExecutionContext implements ExecutionContext {
     }
 
     addSparkVersionFacet(runFacetsBuilder);
+    addSparkPropertyFacet(runFacetsBuilder);
     addProcessingEventFacet(runFacetsBuilder, ol);
 
     return runFacetsBuilder.build();
@@ -272,6 +274,10 @@ class RddExecutionContext implements ExecutionContext {
   private void addSparkVersionFacet(OpenLineage.RunFacetsBuilder b0) {
     sparkContextOption.ifPresent(
         context -> b0.put("spark_version", new SparkVersionFacet(context)));
+  }
+
+  private void addSparkPropertyFacet(OpenLineage.RunFacetsBuilder b0) {
+    b0.put("spark_properties", new SparkPropertyFacet());
   }
 
   private void addProcessingEventFacet(OpenLineage.RunFacetsBuilder b0, OpenLineage ol) {
