@@ -34,6 +34,7 @@ public class SparkPropertyFacetBuilder
             : DEFAULT_ALLOWED_PROPERTIES;
   }
 
+  // TODO: Change this facet to record spark-session's run time configurations.
   @Override
   protected void build(
       SparkListenerJobStart event, BiConsumer<String, ? super SparkPropertyFacet> consumer) {
