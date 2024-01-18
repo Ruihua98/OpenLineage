@@ -23,7 +23,7 @@ public class SparkPropertyFacet extends OpenLineage.DefaultRunFacet {
   @JsonProperty("properties")
   @SuppressWarnings("PMD")
   private Map<String, Object> properties;
-  private static final ALLOWED_KEY = "spark.openlineage.capturedProperties";
+  private static final String ALLOWED_KEY = "spark.openlineage.capturedProperties";
 
   public Map<String, Object> getProperties() {
     return properties;
@@ -44,19 +44,19 @@ public class SparkPropertyFacet extends OpenLineage.DefaultRunFacet {
       SparkConf conf = context.getConf();
 
       if(conf.contains(ALLOWED_KEY)){
-        allowerProperties = conf.get(ALLOWED_KEY).split(",").collect(Collectors.toSet());
+        allowerProperties = Arrays.stream(conf.get(ALLOWED_KEY).split(",")).collect(Collectors.toSet());
       }
 
       for(String key: allowerProperties){
         try {
-          String value = session.conf().get(key)
+          String value = session.conf().get(key);
           properties.putIfAbsent(key, value);
         }catch(NoSuchElementException e){
 
         }
 
       }
-    }catch(IllegalStateException){
+    }catch(IllegalStateException ie){
       properties=new HashMap<>();
     }
   }
