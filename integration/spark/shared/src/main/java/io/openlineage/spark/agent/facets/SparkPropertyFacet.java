@@ -17,6 +17,7 @@ import java.util.HashMap;
 import org.apache.spark.SparkConf;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.NoSuchElementException;
 
 public class SparkPropertyFacet extends OpenLineage.DefaultRunFacet {
   @JsonProperty("properties")
@@ -47,9 +48,13 @@ public class SparkPropertyFacet extends OpenLineage.DefaultRunFacet {
       }
 
       for(String key: allowerProperties){
-        if(null != session.conf().get(key)){
-          properties.putIfAbsent(key, session.conf().get(key));
+        try {
+          String value = session.conf().get(key)
+          properties.putIfAbsent(key, value);
+        }catch(NoSuchElementException e){
+
         }
+
       }
     }catch(IllegalStateException){
       properties=new HashMap<>();

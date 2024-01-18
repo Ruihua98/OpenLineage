@@ -19,6 +19,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.SparkListenerJobStart;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.scheduler.SparkListenerEvent;
+import java.util.NoSuchElementException;
 
 public class SparkPropertyFacetBuilder
     extends CustomFacetBuilder<SparkListenerEvent, SparkPropertyFacet> {
@@ -56,8 +57,11 @@ public class SparkPropertyFacetBuilder
 //        .forEach(e -> m.putIfAbsent(e.getKey().toString(), e.getValue()));
 
     for(String key: allowerProperties){
-      if(null != sparkSession.conf().get(key)){
-        m.putIfAbsent(key,sparkSession.conf().get(key));
+      try {
+        String value = sparkSession.conf().get(key);
+        m.putIfAbsent(key, value);
+      }catch(NoSuchElementException e){
+
       }
     }
 
