@@ -18,7 +18,9 @@ import org.apache.spark.SparkConf;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.NoSuchElementException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class SparkPropertyFacet extends OpenLineage.DefaultRunFacet {
   @JsonProperty("properties")
   @SuppressWarnings("PMD")
@@ -52,7 +54,8 @@ public class SparkPropertyFacet extends OpenLineage.DefaultRunFacet {
           String value = session.conf().get(key);
           properties.putIfAbsent(key, value);
         }catch(NoSuchElementException e){
-
+          // We get keys in capturedProperties from static config captured, while we get key-values from run time config session.conf().
+          log.info("A key in capturedProperties not exists in Runtime Config", key);
         }
 
       }

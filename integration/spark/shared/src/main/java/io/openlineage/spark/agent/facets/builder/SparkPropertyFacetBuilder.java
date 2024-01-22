@@ -20,7 +20,9 @@ import org.apache.spark.scheduler.SparkListenerJobStart;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.scheduler.SparkListenerEvent;
 import java.util.NoSuchElementException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class SparkPropertyFacetBuilder
     extends CustomFacetBuilder<SparkListenerEvent, SparkPropertyFacet> {
   private static final Set<String> DEFAULT_ALLOWED_PROPERTIES =
@@ -61,7 +63,7 @@ public class SparkPropertyFacetBuilder
         String value = sparkSession.conf().get(key);
         m.putIfAbsent(key, value);
       }catch(NoSuchElementException e){
-
+        log.info("A key in capturedProperties not exists in Runtime Config", key);
       }
     }
 
